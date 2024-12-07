@@ -10,6 +10,7 @@ import (
 )
 
 type Handler struct {
+	config   *config.WebSocketConfig
 	upgrader websocket.Upgrader
 	hub      *ws.Hub
 }
@@ -24,6 +25,7 @@ func NewHandler(cfg *config.Config) Handler {
 	m := ws.NewHub()
 
 	return Handler{
+		config:   &cfg.WebSocket,
 		upgrader: u,
 		hub:      m,
 	}

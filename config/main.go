@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig
+	Server    ServerConfig
+	WebSocket WebSocketConfig
 }
 
 func NewConfig() *Config {
@@ -17,6 +18,7 @@ func NewConfig() *Config {
 	}
 
 	return &Config{
-		Server: loadServerConfig(),
+		Server:    loadServerConfig(),
+		WebSocket: loadWebSocketConfig(),
 	}
 }

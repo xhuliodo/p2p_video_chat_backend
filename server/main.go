@@ -10,7 +10,7 @@ import (
 )
 
 type Server struct {
-	config *config.Config
+	config *config.ServerConfig
 	http   *http.Server
 }
 
@@ -28,14 +28,14 @@ func NewServer(cfg *config.Config) *Server {
 	}
 
 	return &Server{
-		config: cfg,
+		config: &cfg.Server,
 		http:   httpServer,
 	}
 }
 
 func (s *Server) Start() error {
-	slog.Info("Starting the server on HTTP PORT: " + s.config.Server.Port)
-	return s.http.ListenAndServeTLS(s.config.Server.SSLCert, s.config.Server.SSLCertKey)
+	slog.Info("Starting the server on HTTP PORT: " + s.config.Port)
+	return s.http.ListenAndServeTLS(s.config.SSLCert, s.config.SSLCertKey)
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {

@@ -26,9 +26,9 @@ func (h *Handler) upgradeConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := ws.NewParticipant(callId, conn)
+	p := ws.NewConnection(h.config, conn, callId)
 	log.Println("created participant")
-	h.hub.AddParticipant(p)
+	h.hub.AddConnection(p)
 	log.Println("added participant")
 
 	go p.ReadMessages(h.hub)
