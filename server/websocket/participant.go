@@ -20,13 +20,28 @@ type Connection struct {
 	egress chan domain.Event
 }
 
-func NewConnection(config *config.WebSocketConfig, ws *websocket.Conn, callId string) *Connection {
+func NewConnection(config *config.WebSocketConfig, ws *websocket.Conn, callId string) (*Connection, error) {
+	// Configure Wait time for Pong response, use Current time + pongWait
+	// This has to be done here to set the first initial timer.
+	if err := ws.SetReadDeadline(time.Now().Add(config.PongWait)); err != nil {
+		log.Println(err)
+		return nil, err
+	}
+	// Configure how to handle Pong responses
+	ws.SetPongHandler(
+		func(appData string) error {
+			// Current time + Pong Wait time
+			// log.Println("pong")
+			return ws.SetReadDeadline(time.Now().Add(config.PongWait))
+		},
+	)
+
 	return &Connection{
 		ws:     ws,
 		config: config,
 		callId: callId,
 		egress: make(chan domain.Event),
-	}
+	}, nil
 }
 
 func (c *Connection) GetUserId() string {
@@ -41,26 +56,11 @@ func (c *Connection) SetUserId(userId string) {
 	c.userId = userId
 }
 
-func (c *Connection) pongHandler(pongMsg string) error {
-	// Current time + Pong Wait time
-	log.Println("pong")
-	return c.ws.SetReadDeadline(time.Now().Add(c.config.PongWait))
-}
-
 func (c *Connection) ReadMessages(hub *Hub) {
 	defer func() {
 		handleAbruptClosure(c, hub)
 		hub.RemoveConnection(c)
 	}()
-
-	// Configure Wait time for Pong response, use Current time + pongWait
-	// This has to be done here to set the first initial timer.
-	if err := c.ws.SetReadDeadline(time.Now().Add(c.config.PongWait)); err != nil {
-		log.Println(err)
-		return
-	}
-	// Configure how to handle Pong responses
-	c.ws.SetPongHandler(c.pongHandler)
 
 	for {
 		_, payload, err := c.ws.ReadMessage()
@@ -79,7 +79,7 @@ func (c *Connection) ReadMessages(hub *Hub) {
 			continue
 		}
 
-		log.Printf("received %s event type\n", req.Type)
+		// log.Printf("received %s event type\n", req.Type)
 
 		// route event
 		if err := hub.RouteEvent(req, c); err != nil {
@@ -104,13 +104,13 @@ func (c *Connection) WriteMessages(hub *Hub) {
 			if !ok {
 				return
 			}
-			log.Printf("sending %s event type\n", event.Type)
+			// log.Printf("sending %s event type\n", event.Type)
 
 			if err := c.ws.WriteJSON(event); err != nil {
 				log.Println("failed sending event with err:", err)
 			}
 		case <-ticker.C:
-			log.Println("ping")
+			// log.Println("ping")
 			if err := c.ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				log.Println("could not send ping event with err:", err)
 				return

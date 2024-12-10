@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -20,35 +21,44 @@ func NewHub() *Hub {
 	}
 }
 
-func (m *Hub) RemoveConnection(conn *Connection) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if _, ok := m.connections[conn]; ok {
+func (h *Hub) RemoveConnection(conn *Connection) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	if _, ok := h.connections[conn]; ok {
 		conn.ws.Close()
-		delete(m.connections, conn)
+		delete(h.connections, conn)
 	}
 }
 
-func (m *Hub) AddConnection(conn *Connection) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.connections[conn] = true
+func (h *Hub) AddConnection(conn *Connection) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.connections[conn] = true
 }
 
-func (m *Hub) SendToCallParticipantsExcept(callId, userId string, event domain.Event) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for conn := range m.connections {
+func (h *Hub) Shutdown(ctx context.Context) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for c := range h.connections {
+		c.ws.Close()
+		delete(h.connections, c)
+	}
+}
+
+func (h *Hub) SendToCallParticipantsExcept(callId, userId string, event domain.Event) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for conn := range h.connections {
 		if conn.callId == callId && conn.userId != userId {
 			conn.egress <- event
 		}
 	}
 }
 
-func (m *Hub) SendToParticipant(userId string, event domain.Event) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	for conn := range m.connections {
+func (h *Hub) SendToParticipant(userId string, event domain.Event) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for conn := range h.connections {
 		if conn.userId == userId {
 			conn.egress <- event
 		}
@@ -56,12 +66,12 @@ func (m *Hub) SendToParticipant(userId string, event domain.Event) {
 }
 
 // routeEvent is used kind of like an internal router for events and their coresponsive handler function
-func (m *Hub) RouteEvent(event domain.Event, conn *Connection) error {
+func (h *Hub) RouteEvent(event domain.Event, conn *Connection) error {
 	// check is the event is supported
-	handler, ok := m.eventHandlers[event.Type]
+	handler, ok := h.eventHandlers[event.Type]
 	if !ok {
 		return fmt.Errorf("event type: %s is not supported", event.Type)
 	}
 
-	return handler(event, conn, m)
+	return handler(event, conn, h)
 }

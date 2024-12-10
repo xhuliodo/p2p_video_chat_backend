@@ -27,6 +27,8 @@ func NewServer(cfg *config.Config) *Server {
 		Handler:      r, // Pass our instance of gorilla/mux in.
 	}
 
+	httpServer.RegisterOnShutdown(h.WSShutdown)
+
 	return &Server{
 		config: &cfg.Server,
 		http:   httpServer,

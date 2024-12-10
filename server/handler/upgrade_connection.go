@@ -26,10 +26,15 @@ func (h *Handler) upgradeConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := ws.NewConnection(h.config, conn, callId)
-	log.Println("created participant")
+	p, err := ws.NewConnection(h.config, conn, callId)
+	if err != nil {
+		log.Printf("could not create a new connection with err: %s\n", err)
+		conn.Close()
+		return
+	}
+	// log.Println("created participant")
 	h.hub.AddConnection(p)
-	log.Println("added participant")
+	// log.Println("added participant")
 
 	go p.ReadMessages(h.hub)
 	go p.WriteMessages(h.hub)

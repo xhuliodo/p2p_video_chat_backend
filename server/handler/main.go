@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -20,6 +21,8 @@ func NewHandler(cfg *config.Config) Handler {
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
+		ReadBufferSize:  cfg.WebSocket.ReadBufferSize,
+		WriteBufferSize: cfg.WebSocket.WriteBufferSize,
 	}
 
 	m := ws.NewHub()
@@ -37,4 +40,9 @@ func (h *Handler) Configure() http.Handler {
 	r.HandleFunc("/calls/{id}", h.upgradeConnection).Methods(http.MethodGet, http.MethodPost)
 
 	return r
+}
+
+func (h *Handler) WSShutdown() {
+	ctx := context.Background()
+	h.hub.Shutdown(ctx)
 }
