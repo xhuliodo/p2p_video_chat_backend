@@ -38,6 +38,7 @@ func (h *Handler) Configure() http.Handler {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/calls/{id}", h.upgradeConnection).Methods(http.MethodGet, http.MethodPost)
+	r.HandleFunc("/healthcheck", h.healthcheck).Methods(http.MethodGet)
 
 	return r
 }
