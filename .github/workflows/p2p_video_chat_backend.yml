@@ -36,16 +36,6 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
 
-      - name: Upload artifact via FTP
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-        run: |
-          sftp -i ssh_key "$SERVER_USER@$SERVER_HOST" << 'EOF'
-            put ./main /opt/p2p_video_chat_backend
-            bye
-          EOF
-
       - name: Deploy via SSH
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -54,6 +44,8 @@ jobs:
         run: |
           ssh -i ssh_key "$SERVER_USER@$SERVER_HOST" << 'EOF'
             echo "Deploying p2p_video_chat_backend..."
+            git pull origin main
+            go build cmd/main.go
             systemctl restart p2p_video_chat_backend
           EOF
 
