@@ -13,7 +13,7 @@ const EventReconnect = "reconnect"
 func HandleEventReconnect(event Event, part Participant, hub Hub) error {
 	var reconnectEvent request.Reconnect
 	if err := json.Unmarshal(event.Payload, &reconnectEvent); err != nil {
-		return fmt.Errorf("could not unmarshall event type: %s with payload: %v with err: %s", EventReconnect, event.Payload, err)
+		return fmt.Errorf("could not unmarshall event type: %s with payload: %s with err: %s", EventReconnect, string(event.Payload), err)
 	}
 
 	var broadcast response.Reconnect

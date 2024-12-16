@@ -1,6 +1,7 @@
 package request
 
 type Offer struct {
-	Offer string `json:"offer"`
-	To    string `json:"to"`
+	Offer    string `json:"offer"`
+	DataMode bool   `json:"dataMode"`
+	To       string `json:"to"`
 }

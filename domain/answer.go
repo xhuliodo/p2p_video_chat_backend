@@ -13,7 +13,7 @@ const EventAnswer string = "answer"
 func HandleEventAnswer(event Event, part Participant, hub Hub) error {
 	var answerEvent request.Answer
 	if err := json.Unmarshal(event.Payload, &answerEvent); err != nil {
-		return fmt.Errorf("could not unmarshall event type: %s with payload: %v with err: %s", EventAnswer, event.Payload, err)
+		return fmt.Errorf("could not unmarshall event type: %s with payload: %s with err: %s", EventAnswer, string(event.Payload), err)
 	}
 
 	var broadcast response.Answer

@@ -13,11 +13,12 @@ const EventOffer = "offer"
 func HandleEventOffer(event Event, part Participant, hub Hub) error {
 	var offerEvent request.Offer
 	if err := json.Unmarshal(event.Payload, &offerEvent); err != nil {
-		return fmt.Errorf("could not unmarshall event type: %s with payload: %v with err: %s", EventOffer, event.Payload, err)
+		return fmt.Errorf("could not unmarshall event type: %s with payload: %s with err: %s", EventOffer, string(event.Payload), err)
 	}
 
 	var broadcast response.Offer
 	broadcast.Offer = offerEvent.Offer
+	broadcast.DataMode = offerEvent.DataMode
 	broadcast.From = part.GetUserId()
 	data, err := json.Marshal(broadcast)
 	if err != nil {

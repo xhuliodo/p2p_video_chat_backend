@@ -13,7 +13,7 @@ const EventNewParticipant = "new_participant"
 func HandleEventNewParticipant(event Event, part Participant, hub Hub) error {
 	var newParticipantEvent request.NewParticipant
 	if err := json.Unmarshal(event.Payload, &newParticipantEvent); err != nil {
-		return fmt.Errorf("could not unmarshall event type: %s with payload: %v with err: %s", EventNewParticipant, event.Payload, err)
+		return fmt.Errorf("could not unmarshall event type: %s with payload: %s with err: %s", EventNewParticipant, string(event.Payload), err)
 	}
 
 	part.SetUserId(newParticipantEvent.UserId)

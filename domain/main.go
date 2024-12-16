@@ -34,5 +34,6 @@ func NewEventHandlers() map[string]EventHandler {
 		EventAnswer:          HandleEventAnswer,
 		EventIceCandidate:    HandleEventIceCandidate,
 		EventReconnect:       HandleEventReconnect,
+		EventDataMode:        HandleEventDataMode,
 	}
 }

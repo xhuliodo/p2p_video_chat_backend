@@ -13,7 +13,7 @@ const EventIceCandidate = "ice_candidate"
 func HandleEventIceCandidate(event Event, part Participant, hub Hub) error {
 	var iceCandidateEvent request.IceCandidate
 	if err := json.Unmarshal(event.Payload, &iceCandidateEvent); err != nil {
-		return fmt.Errorf("could not unmarshall event type: %s with payload: %v with err: %s", EventIceCandidate, event.Payload, err)
+		return fmt.Errorf("could not unmarshall event type: %s with payload: %s with err: %s", EventIceCandidate, string(event.Payload), err)
 	}
 
 	var broadcast response.IceCandidate
