@@ -11,10 +11,12 @@ import (
 )
 
 type Handler struct {
-	config   *config.WebSocketConfig
-	upgrader websocket.Upgrader
-	hub      *ws.Hub
+	wsConfig   *config.WebSocketConfig
+	turnConfig *config.TurnCredentialConfig
+	upgrader   websocket.Upgrader
+	hub        *ws.Hub
 }
+
 
 func NewHandler(cfg *config.Config) Handler {
 	u := websocket.Upgrader{
@@ -28,17 +30,39 @@ func NewHandler(cfg *config.Config) Handler {
 	m := ws.NewHub()
 
 	return Handler{
-		config:   &cfg.WebSocket,
-		upgrader: u,
-		hub:      m,
+		wsConfig:   &cfg.WebSocket,
+		turnConfig: &cfg.TurnCredentials,
+		upgrader:   u,
+		hub:        m,
 	}
+}
+
+// CORS middleware to allow cross-origin requests
+func enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "*") // Allow your frontend domain
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")    // Allow specific methods
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization") // Allow specific headers
+
+		// Handle preflight request (OPTIONS)
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Call the next handler in the chain
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (h *Handler) Configure() http.Handler {
 	r := mux.NewRouter()
 
+	r.Use(enableCORS)
 	r.HandleFunc("/calls/{id}", h.upgradeConnection).Methods(http.MethodGet, http.MethodPost)
 	r.HandleFunc("/healthcheck", h.healthcheck).Methods(http.MethodGet)
+	r.HandleFunc("/turn/credentials", h.TurnCredentials).Methods(http.MethodGet)
 
 	return r
 }

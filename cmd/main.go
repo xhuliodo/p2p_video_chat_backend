@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	conf := config.NewConfig()
+	conf := config.NewConfig([]string{})
 	server := server.NewServer(conf)
 
 	// go func() {

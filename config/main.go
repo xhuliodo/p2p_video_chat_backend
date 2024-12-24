@@ -9,10 +9,11 @@ import (
 type Config struct {
 	Server    ServerConfig
 	WebSocket WebSocketConfig
+	TurnCredentials TurnCredentialConfig
 }
 
-func NewConfig() *Config {
-	err := godotenv.Load()
+func NewConfig(envFiles []string) *Config {
+	err := godotenv.Load(envFiles...)
 	if err != nil {
 		log.Println("Error loading .env file")
 	}
@@ -20,5 +21,6 @@ func NewConfig() *Config {
 	return &Config{
 		Server:    loadServerConfig(),
 		WebSocket: loadWebSocketConfig(),
+		TurnCredentials: loadTurnCredentialConfig(),
 	}
 }

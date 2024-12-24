@@ -26,7 +26,7 @@ func (h *Handler) upgradeConnection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := ws.NewConnection(h.config, conn, callId)
+	p, err := ws.NewConnection(h.wsConfig, conn, callId)
 	if err != nil {
 		log.Printf("could not create a new connection with err: %s\n", err)
 		conn.Close()
