@@ -37,7 +37,7 @@ func NewServer(cfg *config.Config) *Server {
 
 func (s *Server) Start() error {
 	slog.Info("Starting the server on HTTP PORT: " + s.config.Port)
-	return s.http.ListenAndServeTLS(s.config.SSLCert, s.config.SSLCertKey)
+	return s.http.ListenAndServe()
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
