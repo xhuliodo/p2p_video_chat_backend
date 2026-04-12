@@ -1,41 +1,48 @@
 package handler
 
 import (
-	"crypto/hmac"
-	"crypto/sha1"
-	"encoding/base64"
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"time"
-
-	"github.com/xhuliodo/p2p_video_chat_backend/response"
 )
 
 func (h *Handler) TurnCredentials(w http.ResponseWriter, r *http.Request) {
-	userId := r.URL.Query().Get("userId")
-	if userId == "" {
-		http.Error(w, "userId is a required  query variable", http.StatusBadRequest)
-		return
-	}
+	url := fmt.Sprintf(
+		"https://rtc.live.cloudflare.com/v1/turn/keys/%s/credentials/generate-ice-servers",
+		h.turnConfig.CloudflareTurnTokenId,
+	)
 
-	// Generate timestamp
-	timestamp := time.Now().Add(h.turnConfig.ExpireAfter).Unix()
-	username := fmt.Sprintf("%d:%s", timestamp, userId)
-	// Sign the generated username with our secret
-	s := hmac.New(sha1.New, []byte(h.turnConfig.Secret))
-	s.Write([]byte(username))
-	password := base64.StdEncoding.EncodeToString(s.Sum(nil))
-
-	res := response.TurnCredential{
-		Username:  username,
-		Password:  password,
-		ExpiresAt: timestamp,
-	}
-	resJson, err := json.Marshal(res)
+	body, err := json.Marshal(map[string]int{"ttl": int(h.turnConfig.ExpireAfter.Seconds())})
 	if err != nil {
-		http.Error(w, "something went wrong, please retry later", http.StatusInternalServerError)
+		http.Error(w, "failed to marshal request body", http.StatusInternalServerError)
 		return
 	}
-	w.Write(resJson)
+
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodPost, url, bytes.NewBuffer(body))
+	if err != nil {
+		http.Error(w, "failed to create request", http.StatusInternalServerError)
+		return
+	}
+
+	req.Header.Set("Authorization", "Bearer "+h.turnConfig.CloudflareApiToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		http.Error(w, "failed to contact TURN service", http.StatusBadGateway)
+		return
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		http.Error(w, "failed to read TURN response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	w.Write(respBody)
 }

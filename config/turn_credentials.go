@@ -7,17 +7,25 @@ import (
 )
 
 type TurnCredentialConfig struct {
-	Secret      string
-	ExpireAfter time.Duration
+	CloudflareTurnTokenId string
+	CloudflareApiToken    string
+	ExpireAfter           time.Duration
 }
 
 func loadTurnCredentialConfig() TurnCredentialConfig {
-	secret := os.Getenv("TURN_SERVER_SECRET")
-	if secret==""{
+	cloudflareTurnTokenId := os.Getenv("CLOUDFLARE_TURN_TOKEN_ID")
+	if cloudflareTurnTokenId == "" {
+		log.Fatal("could not retrieve CLOUDFLARE_TURN_TOKEN_ID env var")
+	}
+
+	cloudflareApiToken := os.Getenv("CLOUDFLARE_API_TOKEN")
+	if cloudflareApiToken == "" {
 		log.Fatal("could not retrieve TURN_SERVER_SECRET env var")
 	}
+
 	return TurnCredentialConfig{
-		Secret:      secret,
-		ExpireAfter: 8 * time.Hour,
+		CloudflareTurnTokenId: cloudflareTurnTokenId,
+		CloudflareApiToken:    cloudflareApiToken,
+		ExpireAfter:           8 * time.Hour,
 	}
 }
