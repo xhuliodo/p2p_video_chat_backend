@@ -9,48 +9,30 @@ on:
   pull_request:
     branches: ["main"]
 
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/p2p_video_chat_backend
+
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
         with:
-          go-version: "1.22.1"
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build
-        run: go build -v cmd/main.go
-
-      - name: Test
-        run: go test -v ./...
-
-      - name: Set up SSH key
-        env:
-          SSH_KEY: ${{ secrets.SSH_KEY }}
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-        run: |
-          echo "$SSH_KEY" > ssh_key
-          chmod 600 ssh_key
-          mkdir -p ~/.ssh
-          ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
-
-      - name: Deploy via SSH
-        env:
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}
-          SERVER_USER: ${{ secrets.SERVER_USER }}
-          SSH_KEY: ${{ secrets.SSH_KEY }}
-        run: |
-          ssh -i ssh_key "$SERVER_USER@$SERVER_HOST" << 'EOF'
-            echo "Deploying p2p_video_chat_backend..."
-            git pull origin main
-            go build cmd/main.go
-            systemctl restart p2p_video_chat_backend
-          EOF
-
-      - name: Clean up SSH key
-        env:
-          SSH_KEY: ${{ secrets.SSH_KEY }}
-        run: |
-          rm ssh_key
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest
