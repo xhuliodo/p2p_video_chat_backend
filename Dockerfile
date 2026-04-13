@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd
 
 # Use a smaller base image for the final container
 FROM alpine:latest
