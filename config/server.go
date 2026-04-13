@@ -14,7 +14,7 @@ type ServerConfig struct {
 
 func loadServerConfig() ServerConfig {
 	return ServerConfig{
-		Port:            ":8080",
+		Port:            ":80",
 		GracefulTimeout: time.Second * 15,
 		WriteTimeout:    time.Second * 15,
 		ReadTimeout:     time.Second * 15,
